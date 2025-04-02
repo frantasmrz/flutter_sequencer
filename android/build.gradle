@@ -76,7 +76,6 @@ void cloneThirdPartyRepo(String name, String uri, String commit) {
 task cloneThirdPartyRepos {
     cloneThirdPartyRepo('oboe', 'https://github.com/google/oboe', '06ec23e4f6bc00ba7eea9b84e299f9200a598838')
     cloneThirdPartyRepo('TinySoundFont', 'https://github.com/schellingb/TinySoundFont.git', 'bf574519e601202c3a9d27a74f345921277eed39')
-    cloneThirdPartyRepo('sfizz', 'https://github.com/sfztools/sfizz.git', 'fc1f0451cebd8996992cbc4f983fcf76b03295c5')
 }
 
 preBuild.dependsOn cloneThirdPartyRepos
