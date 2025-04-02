@@ -42,7 +42,20 @@ class GlobalState {
   /// With this setting enabled, you can use Track.startNoteNow etc to play
   /// an instrument in real time.
   void setKeepEngineRunning(bool nextValue) {
-    keepEngineRunning = nextValue;
+    if (keepEngineRunning != nextValue) {
+      keepEngineRunning = nextValue;
+      print("🚀 Engine Running: $keepEngineRunning");
+
+      if (keepEngineRunning) {
+        _playEngine(); // Ensure engine starts
+      } else {
+        Future.delayed(Duration(milliseconds: 500), () {
+          if (!isPlaying()) {
+            _pauseEngine();
+          }
+        });
+      }
+    }
   }
 
   /// {@template flutter_sequencer_library_private}
@@ -133,22 +146,34 @@ class GlobalState {
     return sequenceIdMap.values.any((sequence) => sequence.isPlaying);
   }
 
+  bool isPlaying() {
+    return sequenceIdMap.values.any((sequence) => sequence.isPlaying);
+  }
+
   void _playEngine() {
-    // All sequences were paused, play engine
-    if (!keepEngineRunning) NativeBridge.play();
+    NativeBridge.pause();  // Stop first
+    Future.delayed(Duration(milliseconds: 50), () {  // Faster restart
+      NativeBridge.play();  // Start engine again
+    });
 
     if (_topOffTimer != null) _topOffTimer!.cancel();
-    _topOffTimer = Timer.periodic(Duration(milliseconds: 1000), (_) {
-      _topOffAllBuffers();
 
+    _topOffTimer = Timer.periodic(Duration(milliseconds: 250), (_) {  // More frequent buffer updates
+      _topOffAllBuffers();
       sequenceIdMap.values.forEach((sequence) => sequence.checkIsOver());
     });
   }
 
   void _pauseEngine() {
-    if (!keepEngineRunning) NativeBridge.pause();
+    if (!keepEngineRunning && !isPlaying()) {
+      print("⏸️ Pausing Engine...");
+      NativeBridge.pause();
+    } else {
+      print("⚠️ Attempted to pause, but engine is still playing.");
+    }
 
-    if (_topOffTimer != null) _topOffTimer!.cancel();
+    _topOffTimer?.cancel(); // Safe way to cancel timer
+    _topOffTimer = null; // Reset the timer to avoid leaks
   }
 
   /// Gets all tracks in all sequences.
