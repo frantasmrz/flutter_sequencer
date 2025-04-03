@@ -1,3 +1,14 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.18.1)
+cmake_policy(SET CMP0069 NEW)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT result OUTPUT output)
+if(result)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+else()
+    message(WARNING "IPO not supported: ${output}")
+endif()
+
 PROJECT(Sequencer)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.18.1)
