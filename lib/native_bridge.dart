@@ -176,6 +176,10 @@ class NativeBridge {
     return nGetBufferAvailableCount(trackIndex);
   }
 
+  static void destroyEngine() {
+    nDestroyEngine();
+  }
+
   static int handleEventsNow(int trackIndex, List<SchedulerEvent> events,
       int sampleRate, double tempo) {
     if (events.isEmpty) return 0;
