@@ -4,19 +4,12 @@
 #include "SchedulerEvent.h"
 
 track_index_t BaseScheduler::addTrack() {
-    auto maxTracks = std::numeric_limits<track_index_t>::max();
-    
-    for (track_index_t trackIndex = 0; trackIndex < maxTracks; trackIndex++) {
-        if (mBufferMap[trackIndex] == nullptr) {
-            auto buffer = std::make_shared<Buffer<>>();
-            
-            mBufferMap[trackIndex] = buffer;
-            
-            return trackIndex;
-        }
-    }
-    
-    return -1;
+    static track_index_t nextTrackIndex = 0;
+
+    auto buffer = std::make_shared<Buffer<>>();
+    mBufferMap[nextTrackIndex] = buffer;
+
+    return nextTrackIndex++;
 }
 
 void BaseScheduler::removeTrack(track_index_t trackIndex) {
