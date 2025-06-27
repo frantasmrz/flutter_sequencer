@@ -19,6 +19,12 @@ void BaseScheduler::removeTrack(track_index_t trackIndex) {
 }
 
 void BaseScheduler::handleEventsNow(track_index_t trackIndex, const SchedulerEvent* events, uint32_t eventsCount) {
+    auto it = mBufferMap.find(trackIndex);
+    if (it == mBufferMap.end() || it->second == nullptr) {
+        printf("⚠️ handleEventsNow: invalid trackIndex %d\n", trackIndex);
+        return;
+    }
+
     for (uint32_t i = 0; i < eventsCount; i++) {
         handleEvent(trackIndex, events[i], 0);
     }
@@ -26,7 +32,13 @@ void BaseScheduler::handleEventsNow(track_index_t trackIndex, const SchedulerEve
 
 uint32_t BaseScheduler::scheduleEvents(track_index_t trackIndex, const SchedulerEvent* events, uint32_t eventsCount) {
     // Events must come after anything already in the buffer and be sorted by frame, ascending.
-    return mBufferMap[trackIndex]->add(events, eventsCount);
+    auto it = mBufferMap.find(trackIndex);
+    if (it == mBufferMap.end() || it->second == nullptr) {
+        printf("⚠️ scheduleEvents called for invalid track: %d\n", trackIndex);
+        return 0;
+    }
+
+    return it->second->add(events, eventsCount);
 };
 
 void BaseScheduler::clearEvents(track_index_t trackIndex, position_frame_t fromFrame) {
