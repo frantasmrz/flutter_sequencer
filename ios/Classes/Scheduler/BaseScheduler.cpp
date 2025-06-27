@@ -30,7 +30,13 @@ uint32_t BaseScheduler::scheduleEvents(track_index_t trackIndex, const Scheduler
 };
 
 void BaseScheduler::clearEvents(track_index_t trackIndex, position_frame_t fromFrame) {
-    mBufferMap[trackIndex]->clearAfter(fromFrame);
+    auto it = mBufferMap.find(trackIndex);
+    if (it == mBufferMap.end() || it->second == nullptr) {
+        printf("⚠️ clearEvents called for invalid track: %d\n", trackIndex);
+        return;
+    }
+
+    it->second->clearAfter(fromFrame);
 };
 
 void BaseScheduler::play() {
@@ -60,7 +66,13 @@ void BaseScheduler::resetTrack(track_index_t trackIndex) {
 }
 
 uint32_t BaseScheduler::getBufferAvailableCount(track_index_t trackIndex) {
-    return mBufferMap[trackIndex]->availableCount();
+    auto it = mBufferMap.find(trackIndex);
+    if (it == mBufferMap.end() || it->second == nullptr) {
+        printf("⚠️ availableCount() for invalid track: %d\n", trackIndex);
+        return 0;
+    }
+
+    return it->second->availableCount();
 }
 
 position_frame_t BaseScheduler::getPosition() {
@@ -75,8 +87,14 @@ uint64_t BaseScheduler::getLastRenderTimeUs() {
 
 void BaseScheduler::handleFrames(track_index_t trackIndex, uint32_t numFramesToRender) {
     if (!mIsPlaying) return;
-    
-    auto buffer = mBufferMap[trackIndex];
+
+    auto it = mBufferMap.find(trackIndex);
+    if (it == mBufferMap.end() || it->second == nullptr) {
+        printf("⚠️ handleFrames for invalid track: %d\n", trackIndex);
+        return;
+    }
+
+    auto buffer = it->second;
     auto originalPositionFrames = mPositionFrames; // so we can check if setPosition was called
     auto startFrame = mPositionFrames;
     auto lastFrameRendered = startFrame;
