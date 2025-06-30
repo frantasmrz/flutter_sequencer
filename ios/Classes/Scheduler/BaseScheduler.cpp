@@ -3,7 +3,6 @@
 #include <limits>
 #include "SchedulerEvent.h"
 #include <android/log.h>
-#include "SoundFontInstrument.h"
 
 #define LOG_TAG "flutter_sequencer"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
