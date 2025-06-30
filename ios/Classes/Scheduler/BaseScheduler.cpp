@@ -2,6 +2,11 @@
 
 #include <limits>
 #include "SchedulerEvent.h"
+#include <android/log.h>
+#include "SoundFontInstrument.h"
+
+#define LOG_TAG "flutter_sequencer"
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 track_index_t BaseScheduler::addTrack() {
     static track_index_t nextTrackIndex = 0;
@@ -14,14 +19,13 @@ track_index_t BaseScheduler::addTrack() {
 
 void BaseScheduler::removeTrack(track_index_t trackIndex) {
     mBufferMap.erase(trackIndex);
-
     onRemoveTrack(trackIndex);
 }
 
 void BaseScheduler::handleEventsNow(track_index_t trackIndex, const SchedulerEvent* events, uint32_t eventsCount) {
     auto it = mBufferMap.find(trackIndex);
     if (it == mBufferMap.end() || it->second == nullptr) {
-        printf("⚠️ handleEventsNow: invalid trackIndex %d\n", trackIndex);
+        LOGI("⚠️ handleEventsNow: invalid trackIndex %d\n", trackIndex);
         return;
     }
 
@@ -34,7 +38,7 @@ uint32_t BaseScheduler::scheduleEvents(track_index_t trackIndex, const Scheduler
     // Events must come after anything already in the buffer and be sorted by frame, ascending.
     auto it = mBufferMap.find(trackIndex);
     if (it == mBufferMap.end() || it->second == nullptr) {
-        printf("⚠️ scheduleEvents called for invalid track: %d\n", trackIndex);
+        LOGI("⚠️ scheduleEvents called for invalid track: %d\n", trackIndex);
         return 0;
     }
 
@@ -44,7 +48,7 @@ uint32_t BaseScheduler::scheduleEvents(track_index_t trackIndex, const Scheduler
 void BaseScheduler::clearEvents(track_index_t trackIndex, position_frame_t fromFrame) {
     auto it = mBufferMap.find(trackIndex);
     if (it == mBufferMap.end() || it->second == nullptr) {
-        printf("⚠️ clearEvents called for invalid track: %d\n", trackIndex);
+        LOGI("⚠️ clearEvents called for invalid track: %d\n", trackIndex);
         return;
     }
 
@@ -66,21 +70,24 @@ void BaseScheduler::pause() {
 void BaseScheduler::resetTrack(track_index_t trackIndex) {
     SchedulerEvent events[128];
     for (uint8_t noteNumber = 0; noteNumber < 128; noteNumber++) {
-        events[noteNumber].frame = 0;
+        events[noteNumber].frame = mPositionFrames;
         events[noteNumber].type = MIDI_EVENT;
         events[noteNumber].data[0] = 128;
         events[noteNumber].data[1] = noteNumber;
         events[noteNumber].data[2] = 0;
     }
+
     handleEventsNow(trackIndex, std::as_const(events), 128);
 
+    // FORCE RENDER of the note-off events NOW
+    handleRenderAudioRange(trackIndex, 0, 0); // Render 0 frames, triggers flush
     onResetTrack(trackIndex);
 }
 
 uint32_t BaseScheduler::getBufferAvailableCount(track_index_t trackIndex) {
     auto it = mBufferMap.find(trackIndex);
     if (it == mBufferMap.end() || it->second == nullptr) {
-        printf("⚠️ availableCount() for invalid track: %d\n", trackIndex);
+        LOGI("⚠️ availableCount() for invalid track: %d\n", trackIndex);
         return 0;
     }
 
@@ -102,7 +109,7 @@ void BaseScheduler::handleFrames(track_index_t trackIndex, uint32_t numFramesToR
 
     auto it = mBufferMap.find(trackIndex);
     if (it == mBufferMap.end() || it->second == nullptr) {
-        printf("⚠️ handleFrames for invalid track: %d\n", trackIndex);
+        LOGI("⚠️ handleFrames for invalid track: %d\n", trackIndex);
         return;
     }
 
