@@ -1,4 +1,0 @@
-build/*
-install/*
-.clangd/*
-CMakeLists.txt.user
