@@ -11,9 +11,7 @@ import 'track.dart';
 class GlobalState {
   static final GlobalState _globalState = GlobalState._internal();
 
-  GlobalState._internal() {
-    _setupEngine();
-  }
+  GlobalState._internal();
 
   factory GlobalState() {
     return _globalState;
@@ -132,7 +130,7 @@ class GlobalState {
     return (frames / (SECONDS_PER_US * sampleRate!)).round();
   }
 
-  void _setupEngine() async {
+  Future<void> setupEngine() async {
     sampleRate = await NativeBridge.doSetup();
     isEngineReady = true;
     onEngineReadyCallbacks.forEach((callback) => callback());
