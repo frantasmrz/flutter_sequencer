@@ -41,6 +41,9 @@ final nAddTrackSfzString = nativeLib.lookupFunction<
 final nRemoveTrack = nativeLib
     .lookupFunction<Void Function(Int32), void Function(int?)>('remove_track');
 
+final nStopAllNotes = nativeLib
+    .lookupFunction<Void Function(), void Function()>('stop_all_notes');
+
 final nResetTrack = nativeLib
     .lookupFunction<Void Function(Int32), void Function(int?)>('reset_track');
 
@@ -154,6 +157,10 @@ class NativeBridge {
 
   static void removeTrack(int trackIndex) {
     nRemoveTrack(trackIndex);
+  }
+
+  static void stopAllNotes() {
+    nStopAllNotes();
   }
 
   static void resetTrack(int trackIndex) {

@@ -33,6 +33,10 @@ class Sequence {
     globalState.unregisterSequence(this);
   }
 
+  void stopAllNote() {
+    NativeBridge.stopAllNotes();
+  }
+
   final _tracks = <int, Track>{};
   late int id;
 

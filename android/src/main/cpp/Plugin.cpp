@@ -32,6 +32,22 @@ extern "C" {
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
+    void stop_all_notes() {
+        check_engine();
+
+        // Iterate over all known tracks by index
+        for (track_index_t i = 0; i < 128; ++i) {
+            auto instrument = engine->mSchedulerMixer.getTrack(i);
+            if (instrument.has_value()) {
+                auto sf2 = dynamic_cast<SoundFontInstrument*>(instrument.value());
+                if (sf2) {
+                    sf2->stopAllNotes();
+                }
+            }
+        }
+    }
+
+    __attribute__((visibility("default"))) __attribute__((used))
     void add_track_sf2(const char* filename, bool isAsset, int32_t presetIndex, Dart_Port callbackPort) {
         check_engine();
 

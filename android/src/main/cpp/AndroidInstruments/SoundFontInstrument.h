@@ -86,6 +86,23 @@ public:
     void reset() override {
     }
 
+    // The engine pointer must be provided to flush the audio stream.
+    void stopAllNotes() {
+        if (!mTsf) return;
+
+        // Fully reset voices and internal DSP (including reverb)
+        tsf_reset(mTsf);
+
+        // Manually render silence to overwrite any queued tail in the ring buffer
+        const int frames = 1024;
+        const int channels = 2;
+        std::vector<float> silent(frames * channels, 0.0f);
+
+        for (int i = 0; i < 10; ++i) {  // render 10 × 1024 silent frames (~230 ms at 44.1kHz)
+            tsf_render_float(mTsf, silent.data(), frames, 0);
+        }
+    }
+
 private:
     tsf* mTsf = nullptr;
     bool mIsStereo;
