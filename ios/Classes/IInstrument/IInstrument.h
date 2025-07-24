@@ -24,6 +24,7 @@
 class IInstrument: public IRenderableAudio {
 
 public:
+    virtual void stopAllNotes() = 0;
     virtual bool setOutputFormat(int32_t sampleRate, bool isStereo) = 0;
     virtual void handleMidiEvent(uint8_t status, uint8_t data1, uint8_t data2) = 0;
 
