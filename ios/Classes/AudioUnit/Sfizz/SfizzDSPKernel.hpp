@@ -53,6 +53,10 @@ public:
         return mInstrument->loadSfzString(sfzPath, sfzString, tuningString);
     }
 
+    void stopAllNotes() {
+        mInstrument->stopAllNotes();
+    }
+
     void process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) override {
         if (channelCount == 1) {
             // Mono

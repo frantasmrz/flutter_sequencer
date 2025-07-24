@@ -79,6 +79,10 @@ public class SfizzAU: AUAudioUnit {
     public override var canProcessInPlace: Bool {
         return true
     }
+
+    public func stopAllNotes() -> Void {
+        return kernelAdapter.stopAllNotes()
+    }
     
     public func loadSfzFile(path: UnsafePointer<CChar>, tuningPath: UnsafePointer<CChar>) -> Bool {
         return kernelAdapter.loadSfzFile(path, tuningPath: tuningPath)

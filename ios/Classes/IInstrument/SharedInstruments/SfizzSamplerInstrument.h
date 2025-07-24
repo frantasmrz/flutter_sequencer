@@ -33,19 +33,20 @@ public:
         return loadResult && loadTuningResult && mSampler->getNumRegions();
     }
 
-    void stopAllNotes() {
+    void stopAllNotes() override {
         if (!mSampler) return;
 
-        // Stop all voices
-        mSampler->allNotesOff(0);
+        // Send Note Off for all 128 possible MIDI notes on channel 0
+        for (int note = 0; note < 128; ++note) {
+            mSampler->noteOff(0, note, 0);
+        }
 
-        // Optionally render silence to flush DSP tails
+        // Render silence to flush reverb or tail effects (optional but helps)
         const int frames = 1024;
-        const int channels = 2;
-        std::vector<float> silent(frames * channels, 0.0f);
+        std::vector<float> silent(frames * 2, 0.0f); // stereo
         float* buffers[2] = { silent.data(), silent.data() + frames };
 
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i) { // ~230ms at 44.1kHz
             mSampler->renderBlock(buffers, frames);
         }
     }
@@ -62,6 +63,8 @@ public:
     }
 
     void renderAudio(float *audioData, int32_t numFrames) override {
+        if (!mSampler) return;
+
         float leftBuffer[numFrames];
         float rightBuffer[numFrames];
         float* buffers[2];
