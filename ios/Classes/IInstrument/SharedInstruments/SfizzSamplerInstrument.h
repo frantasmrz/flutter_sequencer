@@ -33,6 +33,23 @@ public:
         return loadResult && loadTuningResult && mSampler->getNumRegions();
     }
 
+    void stopAllNotes() {
+        if (!mSampler) return;
+
+        // Stop all voices
+        mSampler->allNotesOff(0);
+
+        // Optionally render silence to flush DSP tails
+        const int frames = 1024;
+        const int channels = 2;
+        std::vector<float> silent(frames * channels, 0.0f);
+        float* buffers[2] = { silent.data(), silent.data() + frames };
+
+        for (int i = 0; i < 10; ++i) {
+            mSampler->renderBlock(buffers, frames);
+        }
+    }
+
     bool loadSfzFile(const char* path, const char* tuningPath) {
         auto loadResult = mSampler->loadSfzFile(path);
         auto loadTuningResult = true;

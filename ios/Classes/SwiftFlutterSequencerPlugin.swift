@@ -75,6 +75,11 @@ func destroyEngine() {
     plugin.engine = nil
 }
 
+@_cdecl("stop_all_notes")
+func stopAllNotes() {
+    plugin.engine?.stopAllNotes()
+}
+
 @_cdecl("add_track_sfz")
 func addTrackSfz(sfzPath: UnsafePointer<CChar>, tuningPath: UnsafePointer<CChar>, callbackPort: Dart_Port) {
     plugin.engine!.addTrackSfz(sfzPath: sfzPath, tuningPath: tuningPath) { trackIndex in

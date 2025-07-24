@@ -31,6 +31,16 @@ public class CocoaEngine {
         engine.stop()
         scheduler.deallocate()
     }
+
+    func stopAllNotes() {
+        for i in 0..<128 {
+            if let avAudioUnit = unsafeAvAudioUnits[Int32(i)] {
+                if let sfizz = avAudioUnit.auAudioUnit as? SfizzAU {
+                    sfizz.stopAllNotes()
+                }
+            }
+        }
+    }
     
     func addTrackSfz(sfzPath: UnsafePointer<CChar>, tuningPath: UnsafePointer<CChar>, completion: @escaping (track_index_t) -> Void) {
         AudioUnitUtils.instantiate(
