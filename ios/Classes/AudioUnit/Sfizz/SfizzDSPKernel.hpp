@@ -12,6 +12,7 @@ A DSPKernel subclass implementing the realtime signal processing portion of the 
 #import "SfizzSamplerInstrument.h"
 #import <vector>
 #import <iostream>
+#include <cstring>
 
 /*
  SfizzDSPKernel
@@ -40,11 +41,18 @@ public:
     void startRamp(AUParameterAddress address, AUValue value, AUAudioFrameCount duration) override {
     }
 
+    std::vector<float> mInterleaved;
+
+    inline void ensureInterleaved(size_t frames) {
+        const size_t need = static_cast<size_t>(frames) * 2;
+        if (mInterleaved.size() < need) mInterleaved.resize(need);
+    }
+
     void setBuffers(AudioBufferList* inBufferList, AudioBufferList* outBufferList) {
         inBufferListPtr = inBufferList;
         outBufferListPtr = outBufferList;
     }
-    
+
     bool loadFile(const char* sfzPath, const char* tuningPath) {
         return mInstrument->loadSfzFile(sfzPath, tuningPath);
     }
@@ -58,24 +66,45 @@ public:
     }
 
     void process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) override {
-        if (channelCount == 1) {
-            // Mono
-            float* outBuffer = (float*)outBufferListPtr->mBuffers[0].mData + bufferOffset;
-            
-            mInstrument->renderAudio(outBuffer, frameCount);
-        } else {
-            // Stereo
-            float interlacedBuffer[frameCount * 2];
-            mInstrument->renderAudio(interlacedBuffer, frameCount);
-            
-            float* leftOutBuffer = (float*)outBufferListPtr->mBuffers[0].mData + bufferOffset;
-            float* rightOutBuffer = (float*)outBufferListPtr->mBuffers[1].mData + bufferOffset;
-            
-            // De-interlace
-            for (int i = 0; i < frameCount; i++) {
-                leftOutBuffer[i] = interlacedBuffer[i * 2];
-                rightOutBuffer[i] = interlacedBuffer[(i * 2) + 1];
+        if (!mInstrument) {
+            // If you prefer silence on null instrument:
+            for (UInt32 b = 0; b < outBufferListPtr->mNumberBuffers; ++b) {
+                float* out = reinterpret_cast<float*>(outBufferListPtr->mBuffers[b].mData) + bufferOffset;
+                std::memset(out, 0, sizeof(float) * frameCount);
             }
+            return;
+        }
+
+        if (channelCount == 1) {
+            // MONO (one channel, one buffer)
+            float* outBuffer = reinterpret_cast<float*>(outBufferListPtr->mBuffers[0].mData) + bufferOffset;
+            // instrument renders mono when configured with isStereo=false
+            mInstrument->renderAudio(outBuffer, static_cast<int32_t>(frameCount));
+            return;
+        }
+
+        // STEREO
+        if (outBufferListPtr->mNumberBuffers >= 2) {
+            // iOS typical: non-interleaved L/R
+            ensureInterleaved(frameCount);
+
+            // Render interleaved from instrument
+            mInstrument->renderAudio(mInterleaved.data(), static_cast<int32_t>(frameCount));
+
+            float* leftOut  = reinterpret_cast<float*>(outBufferListPtr->mBuffers[0].mData) + bufferOffset;
+            float* rightOut = reinterpret_cast<float*>(outBufferListPtr->mBuffers[1].mData) + bufferOffset;
+
+            // De-interleave
+            for (AUAudioFrameCount i = 0; i < frameCount; ++i) {
+                leftOut[i]  = mInterleaved[2 * i];
+                rightOut[i] = mInterleaved[2 * i + 1];
+            }
+        } else if (outBufferListPtr->mNumberBuffers == 1) {
+            // Less common: single interleaved stereo buffer
+            float* interleavedOut = reinterpret_cast<float*>(outBufferListPtr->mBuffers[0].mData) + (bufferOffset * 2);
+            mInstrument->renderAudio(interleavedOut, static_cast<int32_t>(frameCount));
+        } else {
+            // Safety: nothing to write to — clear nothing or early return
         }
     }
     
