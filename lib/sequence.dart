@@ -37,6 +37,10 @@ class Sequence {
     NativeBridge.stopAllNotes();
   }
 
+  void stopAllNotes() {
+    stopAllNote();
+  }
+
   final _tracks = <int, Track>{};
   late int id;
 
@@ -117,11 +121,7 @@ class Sequence {
   void stop() {
     pause();
     setBeat(0.0);
-    _tracks.values.forEach((track) {
-      List.generate(128, (noteNumber) {
-        track.stopNoteNow(noteNumber: noteNumber);
-      });
-    });
+    stopAllNote();
   }
 
   /// Sets the tempo.

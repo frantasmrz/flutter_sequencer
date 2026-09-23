@@ -103,10 +103,11 @@ class GlobalState {
     if (!sequenceIdMap.containsKey(id)) return;
     final sequence = sequenceIdMap[id!]!;
     if (!sequence.isPlaying) return;
-    final shouldPauseEngine = _getIsPlaying();
 
     sequence.pauseBeat = sequence.getBeat();
     sequence.isPlaying = false;
+
+    final shouldPauseEngine = !isPlaying();
 
     if (shouldPauseEngine) {
       // All sequences are paused, pause engine
@@ -166,12 +167,11 @@ class GlobalState {
     if (!keepEngineRunning && !isPlaying()) {
       print("⏸️ Pausing Engine...");
       NativeBridge.pause();
+      _topOffTimer?.cancel(); // Safe way to cancel timer
+      _topOffTimer = null; // Reset the timer to avoid leaks
     } else {
       print("⚠️ Attempted to pause, but engine is still playing.");
     }
-
-    _topOffTimer?.cancel(); // Safe way to cancel timer
-    _topOffTimer = null; // Reset the timer to avoid leaks
   }
 
   /// Gets all tracks in all sequences.
