@@ -42,7 +42,7 @@ class GlobalState {
   void setKeepEngineRunning(bool nextValue) {
     if (keepEngineRunning != nextValue) {
       keepEngineRunning = nextValue;
-      print("🚀 Engine Running: $keepEngineRunning");
+      print('🚀 Engine Running: $keepEngineRunning');
 
       if (keepEngineRunning) {
         _playEngine(); // Ensure engine starts
@@ -76,6 +76,9 @@ class GlobalState {
   /// Unregisters the sequence with the underlying engine.
   void unregisterSequence(Sequence sequence) {
     sequenceIdMap.remove(sequence.id);
+    if (!isPlaying()) {
+      _pauseEngine();
+    }
   }
 
   /// {@macro flutter_sequencer_library_private}
@@ -150,27 +153,30 @@ class GlobalState {
   }
 
   void _playEngine() {
-    NativeBridge.pause();  // Stop first
-    Future.delayed(Duration(milliseconds: 50), () {  // Faster restart
-      NativeBridge.play();  // Start engine again
-    });
+    if (!keepEngineRunning) {
+      NativeBridge.play();
+    }
 
-    if (_topOffTimer != null) _topOffTimer!.cancel();
-
-    _topOffTimer = Timer.periodic(Duration(milliseconds: 250), (_) {  // More frequent buffer updates
+    _topOffTimer?.cancel();
+    _topOffTimer = Timer.periodic(Duration(milliseconds: 250), (_) {
       _topOffAllBuffers();
-      sequenceIdMap.values.forEach((sequence) => sequence.checkIsOver());
+      for (final sequence in sequenceIdMap.values.toList()) {
+        sequence.checkIsOver();
+      }
     });
   }
 
   void _pauseEngine() {
-    if (!keepEngineRunning && !isPlaying()) {
-      print("⏸️ Pausing Engine...");
-      NativeBridge.pause();
-      _topOffTimer?.cancel(); // Safe way to cancel timer
-      _topOffTimer = null; // Reset the timer to avoid leaks
+    if (!isPlaying()) {
+      _topOffTimer?.cancel();
+      _topOffTimer = null;
+
+      if (!keepEngineRunning) {
+        print('⏸️ Pausing Engine...');
+        NativeBridge.pause();
+      }
     } else {
-      print("⚠️ Attempted to pause, but engine is still playing.");
+      print('⚠️ Attempted to pause, but sequence is still playing.');
     }
   }
 
@@ -178,11 +184,11 @@ class GlobalState {
   List<Track> _getAllTracks() {
     final tracks = <Track>[];
 
-    sequenceIdMap.forEach((_, sequence) {
-      sequence.getTracks().forEach((track) {
+    for (final sequence in sequenceIdMap.values.toList()) {
+      for (final track in sequence.getTracks()) {
         tracks.add(track);
-      });
-    });
+      }
+    }
 
     return tracks;
   }
