@@ -29,12 +29,20 @@ class Sequence {
   /// Call this to remove this sequence and its tracks from the global sequencer
   /// engine.
   void destroy() {
-    _tracks.values.forEach((track) => deleteTrack(track));
+    if (isPlaying) {
+      pause();
+    }
+    stopAllNote();
+    _tracks.values.toList().forEach((track) => deleteTrack(track));
     globalState.unregisterSequence(this);
   }
 
   void stopAllNote() {
     NativeBridge.stopAllNotes();
+  }
+
+  void stopAllNotes() {
+    stopAllNote();
   }
 
   final _tracks = <int, Track>{};
@@ -117,11 +125,7 @@ class Sequence {
   void stop() {
     pause();
     setBeat(0.0);
-    _tracks.values.forEach((track) {
-      List.generate(128, (noteNumber) {
-        track.stopNoteNow(noteNumber: noteNumber);
-      });
-    });
+    stopAllNote();
   }
 
   /// Sets the tempo.

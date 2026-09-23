@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (bool)loadSfzFile:(const char *)path tuningPath:(const char * _Nullable)tuningPath;
 - (bool)loadSfzString:(const char *)sampleRoot sfzString:(const char *)sfzString tuningString:(const char * _Nullable)tuningString;
 
+- (void)stopAllNotes;
 - (void)allocateRenderResources;
 - (void)deallocateRenderResources;
 - (AUInternalRenderBlock)internalRenderBlock;

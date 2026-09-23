@@ -44,6 +44,10 @@ Adapter object providing a Swift-accessible interface to the filter's underlying
     return _kernel.loadString(sampleRoot, sfzString, tuningString);
 }
 
+- (void)stopAllNotes {
+    return _kernel.stopAllNotes();
+}
+
 - (AUAudioFrameCount)maximumFramesToRender {
     return _kernel.maximumFramesToRender();
 }
