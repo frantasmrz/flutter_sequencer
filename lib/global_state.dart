@@ -160,9 +160,7 @@ class GlobalState {
 
   void _playEngine() {
     print('[Sequencer:GlobalState] _playEngine() (keepEngineRunning=$keepEngineRunning)');
-    if (!keepEngineRunning) {
-      NativeBridge.play();
-    }
+    NativeBridge.play();
 
     _topOffTimer?.cancel();
     _topOffTimer = Timer.periodic(Duration(milliseconds: 250), (_) {
