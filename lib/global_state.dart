@@ -42,7 +42,7 @@ class GlobalState {
   void setKeepEngineRunning(bool nextValue) {
     if (keepEngineRunning != nextValue) {
       keepEngineRunning = nextValue;
-      print('🚀 Engine Running: $keepEngineRunning');
+      print('[Sequencer:GlobalState] setKeepEngineRunning($keepEngineRunning)');
 
       if (keepEngineRunning) {
         _playEngine(); // Ensure engine starts
@@ -68,6 +68,7 @@ class GlobalState {
     }
 
     sequenceIdMap[nextId] = sequence;
+    print('[Sequencer:GlobalState] registerSequence -> id: $nextId (total: ${sequenceIdMap.length})');
 
     return nextId;
   }
@@ -75,6 +76,7 @@ class GlobalState {
   /// {@macro flutter_sequencer_library_private}
   /// Unregisters the sequence with the underlying engine.
   void unregisterSequence(Sequence sequence) {
+    print('[Sequencer:GlobalState] unregisterSequence(id: ${sequence.id})');
     sequenceIdMap.remove(sequence.id);
     if (!isPlaying()) {
       _pauseEngine();
@@ -83,6 +85,7 @@ class GlobalState {
 
   /// {@macro flutter_sequencer_library_private}
   void playSequence(int? id) {
+    print('[Sequencer:GlobalState] playSequence(id: $id)');
     if (!sequenceIdMap.containsKey(id)) return;
     final sequence = sequenceIdMap[id!]!;
     if (sequence.isPlaying || sequence.getIsOver()) return;
@@ -103,6 +106,7 @@ class GlobalState {
 
   /// {@macro flutter_sequencer_library_private}
   void pauseSequence(int? id) {
+    print('[Sequencer:GlobalState] pauseSequence(id: $id)');
     if (!sequenceIdMap.containsKey(id)) return;
     final sequence = sequenceIdMap[id!]!;
     if (!sequence.isPlaying) return;
@@ -135,8 +139,10 @@ class GlobalState {
   }
 
   Future<void> setupEngine() async {
+    print('[Sequencer:GlobalState] setupEngine() starting...');
     sampleRate = await NativeBridge.doSetup();
     isEngineReady = true;
+    print('[Sequencer:GlobalState] setupEngine() ready, sampleRate=$sampleRate, keepEngineRunning=$keepEngineRunning');
     onEngineReadyCallbacks.forEach((callback) => callback());
 
     if (keepEngineRunning) {
@@ -153,6 +159,7 @@ class GlobalState {
   }
 
   void _playEngine() {
+    print('[Sequencer:GlobalState] _playEngine() (keepEngineRunning=$keepEngineRunning)');
     if (!keepEngineRunning) {
       NativeBridge.play();
     }
@@ -167,16 +174,17 @@ class GlobalState {
   }
 
   void _pauseEngine() {
+    print('[Sequencer:GlobalState] _pauseEngine() called (isPlaying=${isPlaying()}, keepEngineRunning=$keepEngineRunning)');
     if (!isPlaying()) {
       _topOffTimer?.cancel();
       _topOffTimer = null;
 
       if (!keepEngineRunning) {
-        print('⏸️ Pausing Engine...');
+        print('[Sequencer:GlobalState] NativeBridge.pause()');
         NativeBridge.pause();
       }
     } else {
-      print('⚠️ Attempted to pause, but sequence is still playing.');
+      print('[Sequencer:GlobalState] ⚠️ Attempted to pause, but sequence is still playing.');
     }
   }
 

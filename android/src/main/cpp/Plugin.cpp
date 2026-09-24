@@ -3,16 +3,20 @@
 #include "AndroidEngine/AndroidEngine.h"
 #include "AndroidInstruments/SoundFontInstrument.h"
 #include "Utils/OptionArray.h"
+#include "Utils/Logging.h"
 
 std::unique_ptr<AndroidEngine> engine;
 
-void check_engine() {
+bool check_engine(const char* caller = "unknown") {
     if (engine == nullptr) {
-        throw std::runtime_error("Engine is not set up. Ensure that setup_engine() is called before calling this method.");
+        LOGE("❌ check_engine() FAILED in %s: engine is nullptr!", caller);
+        return false;
     }
+    return true;
 }
 
 void setInstrumentOutputFormat(IInstrument* instrument) {
+    if (!check_engine("setInstrumentOutputFormat")) return;
     auto sampleRate = engine->getSampleRate();
     auto channelCount = engine->getChannelCount();
     auto isStereo = channelCount > 1;
@@ -23,17 +27,21 @@ void setInstrumentOutputFormat(IInstrument* instrument) {
 extern "C" {
     __attribute__((visibility("default"))) __attribute__((used))
     void setup_engine(Dart_Port sampleRateCallbackPort) {
+        LOGI("🚀 setup_engine() called with port %lld", (long long)sampleRateCallbackPort);
         engine = std::make_unique<AndroidEngine>(sampleRateCallbackPort);
+        LOGI("🚀 setup_engine() completed successfully");
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void destroy_engine() {
+        LOGI("🛑 destroy_engine() called");
         engine.reset();
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void stop_all_notes() {
-        check_engine();
+        LOGI("⏹️ stop_all_notes() called");
+        if (!check_engine("stop_all_notes")) return;
 
         // Iterate over all known tracks by index
         for (track_index_t i = 0; i < 128; ++i) {
@@ -41,6 +49,7 @@ extern "C" {
             if (instrument.has_value()) {
                 auto sf2 = dynamic_cast<SoundFontInstrument*>(instrument.value());
                 if (sf2) {
+                    LOGI("⏹️ stop_all_notes(): stopping notes on track %d", i);
                     sf2->stopAllNotes();
                 }
             }
@@ -112,49 +121,53 @@ extern "C" {
         }).detach();
     }
 
-__attribute__((visibility("default"))) __attribute__((used))
+    __attribute__((visibility("default"))) __attribute__((used))
     void remove_track(track_index_t trackIndex) {
-        check_engine();
+        LOGI("🗑️ remove_track(%d) called", trackIndex);
+        if (!check_engine("remove_track")) return;
 
         engine->mSchedulerMixer.removeTrack(trackIndex);
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void reset_track(track_index_t trackIndex) {
-        check_engine();
+        LOGI("🔄 reset_track(%d) called", trackIndex);
+        if (!check_engine("reset_track")) return;
 
         engine->mSchedulerMixer.resetTrack(trackIndex);
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     float get_track_volume(track_index_t trackIndex) {
-        check_engine();
+        if (!check_engine("get_track_volume")) return 0.0f;
 
         return engine->mSchedulerMixer.getLevel(trackIndex);
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     int32_t get_position() {
-        check_engine();
+        if (!check_engine("get_position")) return 0;
 
         return engine->mSchedulerMixer.getPosition();
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     uint64_t get_last_render_time_us() {
-        check_engine();
+        if (!check_engine("get_last_render_time_us")) return 0;
 
         return engine->mSchedulerMixer.getLastRenderTimeUs();
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     uint32_t get_buffer_available_count(track_index_t trackIndex) {
+        if (!check_engine("get_buffer_available_count")) return 0;
+
         return engine->mSchedulerMixer.getBufferAvailableCount(trackIndex);
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void handle_events_now(track_index_t trackIndex, const uint8_t* eventData, int32_t eventsCount) {
-        check_engine();
+        if (!check_engine("handle_events_now")) return;
 
         SchedulerEvent events[eventsCount];
 
@@ -165,7 +178,7 @@ __attribute__((visibility("default"))) __attribute__((used))
 
     __attribute__((visibility("default"))) __attribute__((used))
     int32_t schedule_events(track_index_t trackIndex, const uint8_t* eventData, int32_t eventsCount) {
-        check_engine();
+        if (!check_engine("schedule_events")) return 0;
 
         SchedulerEvent events[eventsCount];
 
@@ -176,21 +189,23 @@ __attribute__((visibility("default"))) __attribute__((used))
 
     __attribute__((visibility("default"))) __attribute__((used))
     void clear_events(track_index_t trackIndex, position_frame_t fromFrame) {
-        check_engine();
+        if (!check_engine("clear_events")) return;
 
         return engine->mSchedulerMixer.clearEvents(trackIndex, fromFrame);
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void engine_play() {
-        check_engine();
+        LOGI("▶️ engine_play() called");
+        if (!check_engine("engine_play")) return;
 
         engine->play();
     }
 
     __attribute__((visibility("default"))) __attribute__((used))
     void engine_pause() {
-        check_engine();
+        LOGI("⏸️ engine_pause() called");
+        if (!check_engine("engine_pause")) return;
 
         engine->pause();
     }
