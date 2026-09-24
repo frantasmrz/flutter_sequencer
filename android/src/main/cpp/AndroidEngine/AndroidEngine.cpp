@@ -65,6 +65,7 @@ void AndroidEngine::play() {
     mSchedulerMixer.play();
 
     auto streamState = mOutStream->getState();
+    LOGI("AndroidEngine::play() - streamState: %s (%d)", convertToText(streamState), static_cast<int>(streamState));
 
     // Don't request start if stream is already starting or started
     if (streamState != oboe::StreamState(3)
@@ -75,11 +76,17 @@ void AndroidEngine::play() {
             LOGE("Failed to start stream. Error: %s", convertToText(result));
             return;
         }
+        LOGI("AndroidEngine::play() - requestStart succeeded");
+    } else {
+        LOGI("AndroidEngine::play() - stream already starting/started, skipping requestStart");
     }
 }
 
 void AndroidEngine::pause() {
     mSchedulerMixer.pause();
+
+    auto streamState = mOutStream->getState();
+    LOGI("AndroidEngine::pause() - streamState: %s (%d)", convertToText(streamState), static_cast<int>(streamState));
 
     oboe::Result result = mOutStream->requestPause();
 
@@ -87,4 +94,5 @@ void AndroidEngine::pause() {
         LOGE("Failed to pause stream. Error: %s", convertToText(result));
         return;
     }
+    LOGI("AndroidEngine::pause() - requestPause succeeded");
 }

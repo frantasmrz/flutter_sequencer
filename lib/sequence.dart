@@ -29,6 +29,7 @@ class Sequence {
   /// Call this to remove this sequence and its tracks from the global sequencer
   /// engine.
   void destroy() {
+    print('[Sequencer:Sequence] destroy() id: $id, isPlaying: $isPlaying');
     if (isPlaying) {
       pause();
     }
@@ -38,6 +39,7 @@ class Sequence {
   }
 
   void stopAllNote() {
+    print('[Sequencer:Sequence] stopAllNote()');
     NativeBridge.stopAllNotes();
   }
 
@@ -101,6 +103,7 @@ class Sequence {
   /// Starts playback of this sequence. If it is already playing, this will have
   /// no effect.
   void play() {
+    print('[Sequencer:Sequence] play() id: $id, isEngineReady: ${globalState.isEngineReady}');
     if (!globalState.isEngineReady) return;
 
     if (getIsOver()) {
@@ -113,6 +116,7 @@ class Sequence {
   /// Pauses playback of this sequence. If it is already paused, this will have
   /// no effect.
   void pause() {
+    print('[Sequencer:Sequence] pause() id: $id, isEngineReady: ${globalState.isEngineReady}');
     if (!globalState.isEngineReady) return;
 
     _tracks.values.forEach((track) {
@@ -123,6 +127,7 @@ class Sequence {
 
   /// Stops playback of this sequence and resets its position to the beginning.
   void stop() {
+    print('[Sequencer:Sequence] stop() id: $id');
     pause();
     setBeat(0.0);
     stopAllNote();
